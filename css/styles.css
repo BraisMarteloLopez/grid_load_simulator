@@ -84,3 +84,47 @@ body {
     font-size: 0.875rem;
     font-style: italic;
 }
+
+/* Controles */
+.control-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.control-row label {
+    font-size: 0.875rem;
+    color: var(--text);
+}
+
+.control-row input[type="number"] {
+    width: 80px;
+    padding: 6px 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.875rem;
+}
+
+.btn {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn:hover {
+    filter: brightness(1.1);
+}
+
+.btn:active {
+    filter: brightness(0.95);
+}
