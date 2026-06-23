@@ -10,6 +10,17 @@ class Grid {
         this.padding = options.padding;
     }
 
+    // Márgenes interiores del canvas donde "viven" los puntos.
+    getBounds() {
+        const r = this.padding;
+        return {
+            minX: r,
+            minY: r,
+            maxX: this.canvas.width - r,
+            maxY: this.canvas.height - r,
+        };
+    }
+
     draw() {
         const { ctx, canvas, rows, cols, padding } = this;
 
