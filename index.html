@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grid Load Simulator</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header class="app-header">
+        <h1>Grid Load Simulator</h1>
+    </header>
+
+    <main class="app-layout">
+        <!-- Salida visual: el grid, centrado -->
+        <section class="grid-panel">
+            <canvas id="grid-canvas" width="480" height="480"></canvas>
+        </section>
+
+        <!-- Panel lateral derecho -->
+        <aside class="sidebar">
+            <!-- Controles configurables (arriba) -->
+            <section class="panel controls-panel">
+                <h2>Controles</h2>
+                <div class="panel-body" id="controls-body">
+                    <p class="placeholder">Sin controles todavía.</p>
+                </div>
+            </section>
+
+            <!-- Resultados (debajo) -->
+            <section class="panel results-panel">
+                <h2>Resultados</h2>
+                <div class="panel-body" id="results-body">
+                    <p class="placeholder">Sin resultados todavía.</p>
+                </div>
+            </section>
+        </aside>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/grid.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
