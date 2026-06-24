@@ -62,4 +62,10 @@ const CONFIG = {
         // en la vista por defecto (1 = lo llena).
         fitFill: 1,
     },
+    // Agrupación de los chunks: los 16 chunks se reparten en `count` grupos,
+    // numerados en orden ascendente y de derecha a izquierda.
+    groups: {
+        count: 4,
+        colors: ['#4f8cff', '#ff9f4f', '#5fd17a', '#c08cff'],
+    },
 };
