@@ -109,10 +109,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateResults() {
         const red = points.reduce((n, p) => n + (p.crowded ? 1 : 0), 0);
+        const rest = points.length - red;
         let html = `<p style="color:${CONFIG.points.proximity.color}">Puntos cercanos: <strong>${red}</strong></p>`;
         if (joinToggle.checked) {
             html += `<p style="color:${CONFIG.points.interaction.color}">Conexiones: <strong>${interactions.length}</strong></p>`;
         }
+        html += `<p style="color:${CONFIG.behaviors.wander.color}">No cercanos: <strong>${rest}</strong></p>`;
         resultsBody.innerHTML = html;
     }
 
