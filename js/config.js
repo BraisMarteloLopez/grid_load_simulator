@@ -29,4 +29,9 @@ const CONFIG = {
             showArea: true,             // dibujar el área del centroide
         },
     },
+    view: {
+        minScale: 0.25,    // zoom mínimo (alejar)
+        maxScale: 8,       // zoom máximo (acercar)
+        zoomSpeed: 0.0015, // sensibilidad de la rueda
+    },
 };
