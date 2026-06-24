@@ -108,11 +108,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateResults() {
-        const wander = points.filter(p => p.behavior === 'wander').length;
-        const centroid = points.length - wander;
-        resultsBody.innerHTML =
-            `<p style="color:${CONFIG.behaviors.wander.color}">Vagando (wander): <strong>${wander}</strong></p>` +
-            `<p style="color:${CONFIG.behaviors.centroid.color}">Pululando (centroide): <strong>${centroid}</strong></p>`;
+        const red = points.reduce((n, p) => n + (p.crowded ? 1 : 0), 0);
+        let html = `<p style="color:${CONFIG.points.proximity.color}">Puntos cercanos: <strong>${red}</strong></p>`;
+        if (joinToggle.checked) {
+            html += `<p style="color:${CONFIG.points.interaction.color}">Conexiones: <strong>${interactions.length}</strong></p>`;
+        }
+        resultsBody.innerHTML = html;
     }
 
     // Dibuja el área de todos los centroides (si está activado).
