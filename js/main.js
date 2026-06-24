@@ -21,19 +21,34 @@ document.addEventListener('DOMContentLoaded', () => {
         wander: CONFIG.behaviors.wander,
         centroid: {
             color: CONFIG.behaviors.centroid.color,
-            x: 0,
-            y: 0,
             radius: CONFIG.behaviors.centroid.radius,
             showArea: CONFIG.behaviors.centroid.showArea,
+            list: [], // centroides repartidos por el grid (se generan abajo)
         },
     };
 
-    // El centroide es fijo dentro del mundo cuadrado (posición relativa).
-    function resolveCentroid() {
+    // Genera varios centroides repartidos por el grid mediante una rejilla
+    // regular + jitter aleatorio (posición "más o menos aleatoria").
+    function generateCentroids() {
         const bounds = grid.getBounds();
         const cc = CONFIG.behaviors.centroid;
-        behaviors.centroid.x = bounds.minX + cc.cx * (bounds.maxX - bounds.minX);
-        behaviors.centroid.y = bounds.minY + cc.cy * (bounds.maxY - bounds.minY);
+        const n = Math.max(1, cc.count);
+        const cols = Math.ceil(Math.sqrt(n));
+        const rows = Math.ceil(n / cols);
+        const cellW = (bounds.maxX - bounds.minX) / cols;
+        const cellH = (bounds.maxY - bounds.minY) / rows;
+        const list = [];
+        for (let i = 0; i < n; i++) {
+            const gx = i % cols;
+            const gy = Math.floor(i / cols);
+            let x = bounds.minX + (gx + 0.5) * cellW + (Math.random() - 0.5) * cellW * cc.jitter;
+            let y = bounds.minY + (gy + 0.5) * cellH + (Math.random() - 0.5) * cellH * cc.jitter;
+            // Mantén el área del centroide dentro de los márgenes.
+            x = Math.max(bounds.minX + cc.radius, Math.min(bounds.maxX - cc.radius, x));
+            y = Math.max(bounds.minY + cc.radius, Math.min(bounds.maxY - cc.radius, y));
+            list.push({ x, y });
+        }
+        behaviors.centroid.list = list;
     }
 
     // Encuadra el grid cuadrado para que llene la pantalla manteniendo la
@@ -96,17 +111,19 @@ document.addEventListener('DOMContentLoaded', () => {
             `<p style="color:${CONFIG.behaviors.centroid.color}">Pululando (centroide): <strong>${centroid}</strong></p>`;
     }
 
-    // Dibuja el área del centroide (si está activada).
+    // Dibuja el área de todos los centroides (si está activado).
     function drawCentroidArea() {
         const c = behaviors.centroid;
         if (!c.showArea) return;
         ctx.save();
-        ctx.beginPath();
-        ctx.arc(c.x, c.y, c.radius, 0, Math.PI * 2);
         ctx.strokeStyle = c.color;
         ctx.globalAlpha = 0.35;
         ctx.setLineDash([4, 4]);
-        ctx.stroke();
+        for (const p of c.list) {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, c.radius, 0, Math.PI * 2);
+            ctx.stroke();
+        }
         ctx.restore();
     }
 
@@ -175,8 +192,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (zoomValue) zoomValue.textContent = Math.round(camera.scale * 100) + '%';
     }
 
-    // Reset: aplica los nuevos cambios (regenera los puntos) y reencuadra.
+    // Reset: regenera centroides (nueva ubicación), puntos y reencuadra.
     resetBtn.addEventListener('click', () => {
+        generateCentroids();
         buildPoints();
         fitCamera();
     });
@@ -186,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Inicializa el valor del control desde la config y arranca.
     countInput.value = CONFIG.points.count;
-    resolveCentroid();
+    generateCentroids();
     resizeCanvas();
     buildPoints();
     requestAnimationFrame(loop);

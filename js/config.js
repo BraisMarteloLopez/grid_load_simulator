@@ -23,11 +23,11 @@ const CONFIG = {
         // Color de cada comportamiento (para distinguirlos visualmente).
         wander:   { color: '#4f8cff' }, // vaga libre por todo el canvas
         centroid: {
-            color: '#ff9f4f',           // pulula alrededor de un centroide
-            cx: 0.5,                     // posición X relativa al área (0..1)
-            cy: 0.5,                     // posición Y relativa al área (0..1)
-            radius: 80,                 // radio del área en el que pulula (px)
-            showArea: true,             // dibujar el área del centroide
+            color: '#ff9f4f',  // pulula alrededor de un centroide
+            count: 5,          // número de centroides repartidos por el grid
+            radius: 35,        // radio del área de cada centroide (px)
+            jitter: 0.7,       // aleatoriedad de la posición respecto a la rejilla (0..1)
+            showArea: true,    // dibujar el área de los centroides
         },
     },
     view: {
