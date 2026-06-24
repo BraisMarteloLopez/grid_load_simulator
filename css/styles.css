@@ -51,6 +51,11 @@ body {
     background: var(--panel-bg);
     border: 1px solid var(--border);
     border-radius: 8px;
+    cursor: grab;
+}
+
+#grid-canvas.dragging {
+    cursor: grabbing;
 }
 
 /* Barra lateral con controles arriba y resultados abajo */
@@ -150,4 +155,10 @@ body {
 .exec-info-item strong {
     color: var(--accent);
     font-variant-numeric: tabular-nums;
+}
+
+.exec-info-hint {
+    margin-left: auto;
+    font-size: 0.75rem;
+    opacity: 0.7;
 }

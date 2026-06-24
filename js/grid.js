@@ -21,10 +21,10 @@ class Grid {
         };
     }
 
+    // El bucle limpia el canvas (en coordenadas de pantalla) antes de aplicar
+    // la cámara, así que aquí ya no se borra.
     draw() {
         const { ctx, canvas, rows, cols, padding } = this;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const areaW = canvas.width - padding * 2;
         const areaH = canvas.height - padding * 2;
