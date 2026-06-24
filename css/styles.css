@@ -128,3 +128,26 @@ body {
 .btn:active {
     filter: brightness(0.95);
 }
+
+/* Información sobre la ejecución (barra inferior independiente) */
+.exec-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 24px;
+    margin-top: 8px;
+    border-top: 1px solid var(--border);
+    background: var(--panel-bg);
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.exec-info-label {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.exec-info-item strong {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+}
