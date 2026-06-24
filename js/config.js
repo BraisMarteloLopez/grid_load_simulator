@@ -23,8 +23,8 @@ const CONFIG = {
         wander:   { color: '#4f8cff' }, // vaga libre por todo el canvas
         centroid: {
             color: '#ff9f4f',           // pulula alrededor de un centroide
-            x: 240,                     // centroide X (px)
-            y: 240,                     // centroide Y (px)
+            cx: 0.5,                     // posición X relativa al área (0..1)
+            cy: 0.5,                     // posición Y relativa al área (0..1)
             radius: 80,                 // radio del área en el que pulula (px)
             showArea: true,             // dibujar el área del centroide
         },

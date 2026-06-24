@@ -15,6 +15,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let points = [];
 
+    // Comportamientos en runtime: el centroide se resuelve a píxeles según el
+    // tamaño actual del canvas (su posición es relativa en la config).
+    const behaviors = {
+        wander: CONFIG.behaviors.wander,
+        centroid: {
+            color: CONFIG.behaviors.centroid.color,
+            x: 0,
+            y: 0,
+            radius: CONFIG.behaviors.centroid.radius,
+            showArea: CONFIG.behaviors.centroid.showArea,
+        },
+    };
+
+    // Ajusta el tamaño interno del canvas al tamaño que ocupa en pantalla,
+    // y recalcula márgenes, centroide y posición de los puntos existentes.
+    function resizeCanvas() {
+        const w = Math.round(canvas.clientWidth);
+        const h = Math.round(canvas.clientHeight);
+        if (w > 0 && h > 0 && (canvas.width !== w || canvas.height !== h)) {
+            canvas.width = w;
+            canvas.height = h;
+        }
+        const bounds = grid.getBounds();
+
+        // Recoloca el centroide (posición relativa -> píxeles).
+        const cc = CONFIG.behaviors.centroid;
+        behaviors.centroid.x = bounds.minX + cc.cx * (bounds.maxX - bounds.minX);
+        behaviors.centroid.y = bounds.minY + cc.cy * (bounds.maxY - bounds.minY);
+
+        // Actualiza los márgenes de los puntos ya existentes y los reencaja.
+        for (const p of points) {
+            p.bounds = bounds;
+            p.x = Math.max(bounds.minX, Math.min(bounds.maxX, p.x));
+            p.y = Math.max(bounds.minY, Math.min(bounds.maxY, p.y));
+        }
+    }
+
     // --- Medición de FPS ---
     let lastTime = null;   // timestamp del frame anterior
     let fps = 0;           // FPS suavizado
@@ -43,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const bounds = grid.getBounds();
         points = [];
         for (let i = 0; i < count; i++) {
-            points.push(new Point(bounds, CONFIG.points, CONFIG.behaviors));
+            points.push(new Point(bounds, CONFIG.points, behaviors));
         }
     }
 
@@ -58,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Dibuja el área del centroide (si está activada).
     function drawCentroidArea() {
-        const c = CONFIG.behaviors.centroid;
+        const c = behaviors.centroid;
         if (!c.showArea) return;
         ctx.save();
         ctx.beginPath();
@@ -141,8 +178,12 @@ document.addEventListener('DOMContentLoaded', () => {
         camera.reset();
     });
 
+    // Reajusta el canvas cuando cambia el tamaño de la ventana.
+    window.addEventListener('resize', resizeCanvas);
+
     // Inicializa el valor del control desde la config y arranca.
     countInput.value = CONFIG.points.count;
+    resizeCanvas();
     buildPoints();
     requestAnimationFrame(loop);
 });
