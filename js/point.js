@@ -17,6 +17,9 @@ class Point {
         // La velocidad es común a todas las partículas (sin variación de base);
         // se lee de options.speed en cada update, así el control la cambia en vivo.
 
+        // Temporizador para el "tiempo entre decisiones" (desfasado al inicio).
+        this.decisionTimer = Math.random() * options.decisionInterval;
+
         // Posición y dirección iniciales aleatorias.
         this.x = this._rand(bounds.minX, bounds.maxX);
         this.y = this._rand(bounds.minY, bounds.maxY);
@@ -56,11 +59,21 @@ class Point {
     update() {
         this._maybeSwitchBehavior();
 
-        // Giro aleatorio base (caminata aleatoria).
-        this.heading += (Math.random() - 0.5) * this.turn;
+        const speed = this.options.speed;
+
+        // "Tiempo entre decisiones": el giro aleatorio no ocurre cada frame, sino
+        // cada cierto número de frames que escala de forma inversa a la velocidad
+        // (1:1 a la velocidad base). Así, a menor velocidad, más tiempo en línea
+        // recta entre giros → las partículas recorren más terreno.
+        this.decisionTimer -= 1;
+        if (this.decisionTimer <= 0) {
+            this.heading += (Math.random() - 0.5) * this.turn;
+            const ref = this.options.baseSpeed;
+            this.decisionTimer = this.options.decisionInterval * (ref / Math.max(speed, 1e-6));
+        }
 
         // Comportamiento centroide: si se aleja más del radio de SU centroide,
-        // vuelve hacia él.
+        // vuelve hacia él (corrección reactiva en cada frame).
         if (this.behavior === 'centroid' && this.target) {
             const radius = this.behaviors.centroid.radius;
             const dx = this.target.x - this.x;
@@ -72,7 +85,6 @@ class Point {
             }
         }
 
-        const speed = this.options.speed;
         let nx = this.x + Math.cos(this.heading) * speed;
         let ny = this.y + Math.sin(this.heading) * speed;
 
