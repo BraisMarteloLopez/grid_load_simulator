@@ -38,9 +38,9 @@ body {
     flex: 1;
     min-height: 0;
     display: grid;
-    grid-template-columns: 1fr 240px;
-    gap: 16px;
-    padding: 16px;
+    grid-template-columns: 1fr 190px;
+    gap: 14px;
+    padding: 14px;
     align-items: stretch;
 }
 
@@ -64,77 +64,91 @@ body {
     cursor: grabbing;
 }
 
-/* Barra lateral con controles arriba y resultados abajo */
+/* Barra lateral densa: bloques ligeros, sin cajas pesadas */
 .sidebar {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
 }
 
-.panel {
+.block {
     background: var(--panel-bg);
     border: 1px solid var(--border);
     border-radius: 6px;
-    overflow: hidden;
+    padding: 8px 10px;
 }
 
-.panel h2 {
-    font-size: 0.8rem;
-    font-weight: 600;
-    padding: 7px 10px;
-    border-bottom: 1px solid var(--border);
-}
-
-.panel-body {
-    padding: 10px;
-}
-
-.panel-body p {
-    font-size: 0.8rem;
-    margin: 2px 0;
+/* Cabecera tipo etiqueta pequeña en mayúsculas */
+.block-title {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 7px;
 }
 
 .placeholder {
     color: var(--muted);
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     font-style: italic;
 }
 
-/* Controles */
+/* Controles: label flexible + input fijo, filas muy juntas */
 .control-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 54px;
     align-items: center;
-    justify-content: space-between;
     gap: 8px;
-    margin-bottom: 7px;
+    margin-bottom: 5px;
 }
 
 .control-row label {
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .control-row input[type="number"] {
-    width: 62px;
-    padding: 4px 6px;
+    width: 100%;
+    padding: 2px 5px;
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 5px;
+    border-radius: 4px;
     color: var(--text);
-    font-size: 0.8rem;
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.control-row input.toggle {
+    justify-self: end;
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--accent);
 }
 
 .btn {
     width: 100%;
-    margin-top: 2px;
-    padding: 6px 10px;
+    margin-top: 6px;
+    padding: 5px 10px;
     background: var(--accent);
     border: none;
-    border-radius: 5px;
+    border-radius: 4px;
     color: #fff;
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     font-weight: 600;
     cursor: pointer;
+}
+
+/* Resultados compactos */
+#results-body p {
+    font-size: 0.72rem;
+    line-height: 1.35;
+    margin: 0;
 }
 
 .btn:hover {

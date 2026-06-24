@@ -31,6 +31,7 @@ const CONFIG = {
         // rango (= proximity.distance × rangeMultiplier) "interactúa" con ella
         // dibujando una línea durante unos frames.
         interaction: {
+            enabled: true,       // on/off de las líneas que unen los puntos
             rangeMultiplier: 9,  // rango = proximity.distance × este factor
             chance: 0.02,        // probabilidad (muy ocasional) en cada evaluación
             interval: 10,        // se evalúa cada N frames

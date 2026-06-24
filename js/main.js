@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const centroidInput = document.getElementById('centroid-count');
     const proximityInput = document.getElementById('proximity-distance');
     const speedInput = document.getElementById('speed');
+    const joinToggle = document.getElementById('join-toggle');
     const resetBtn = document.getElementById('reset-btn');
     const resultsBody = document.getElementById('results-body');
     const fpsValue = document.getElementById('fps-value');
@@ -107,11 +108,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateResults() {
-        const wander = points.filter(p => p.behavior === 'wander').length;
-        const centroid = points.length - wander;
-        resultsBody.innerHTML =
-            `<p style="color:${CONFIG.behaviors.wander.color}">Vagando (wander): <strong>${wander}</strong></p>` +
-            `<p style="color:${CONFIG.behaviors.centroid.color}">Pululando (centroide): <strong>${centroid}</strong></p>`;
+        const red = points.reduce((n, p) => n + (p.crowded ? 1 : 0), 0);
+        const rest = points.length - red;
+        let html = `<p style="color:${CONFIG.points.proximity.color}">Puntos cercanos: <strong>${red}</strong></p>`;
+        if (joinToggle.checked) {
+            html += `<p style="color:${CONFIG.points.interaction.color}">Conexiones: <strong>${interactions.length}</strong></p>`;
+        }
+        html += `<p style="color:${CONFIG.behaviors.wander.color}">No cercanos: <strong>${rest}</strong></p>`;
+        resultsBody.innerHTML = html;
     }
 
     // Dibuja el área de todos los centroides (si está activado).
@@ -191,9 +195,12 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const p of points) p.update();
         // 2) Marca los que están demasiado cerca de otro punto.
         markProximity();
-        // 3) Interacciones (líneas) y su dibujo (por debajo de los puntos).
-        updateInteractions();
-        drawInteractions();
+        // 3) Interacciones (líneas): solo si están activadas. Cuando está OFF
+        //    no se ejecuta nada de su procesamiento (ni búsqueda, ni dibujo).
+        if (joinToggle.checked) {
+            updateInteractions();
+            drawInteractions();
+        }
         // 4) Dibuja los puntos.
         for (const p of points) p.draw(ctx);
 
@@ -211,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateInteractions() {
         const cfg = CONFIG.points.interaction;
+
         // Envejece y descarta las líneas caducadas.
         interactions = interactions.filter(it => --it.framesLeft > 0);
 
@@ -304,11 +312,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (Number.isFinite(v) && v >= 0) CONFIG.points.speed = v;
     });
 
+    // Al desactivar "Unir puntos", descarta las líneas activas al instante.
+    joinToggle.addEventListener('change', () => {
+        if (!joinToggle.checked) interactions = [];
+    });
+
     // Inicializa el valor del control desde la config y arranca.
     countInput.value = CONFIG.points.count;
     centroidInput.value = CONFIG.behaviors.centroid.count;
     proximityInput.value = CONFIG.points.proximity.distance;
     speedInput.value = CONFIG.points.speed;
+    joinToggle.checked = CONFIG.points.interaction.enabled;
     generateCentroids();
     resizeCanvas();
     buildPoints();
