@@ -23,7 +23,7 @@ const CONFIG = {
         // se pintan de rojo claro.
         proximity: {
             distance: 15,      // distancia (px) para considerarlos "juntos"
-            color: '#ff8a8a',  // rojo claro
+            color: '#ff3b3b',  // rojo claro, inequívocamente rojo (distinto del naranja)
             opacity: 1.0,      // opacidad de los puntos en proximidad
         },
     },
