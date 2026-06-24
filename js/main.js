@@ -179,6 +179,10 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         camera.apply(ctx);
 
+        // El grid y los centroides se dibujan a opacidad plena; solo los puntos
+        // ajustan su propia opacidad. Reseteamos aquí para que la opacidad de
+        // los puntos no se "filtre" a estos elementos.
+        ctx.globalAlpha = 1;
         grid.draw();
         drawCentroidArea();
 
