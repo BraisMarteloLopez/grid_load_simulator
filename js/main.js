@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const centroidInput = document.getElementById('centroid-count');
     const proximityInput = document.getElementById('proximity-distance');
     const speedInput = document.getElementById('speed');
+    const joinToggle = document.getElementById('join-toggle');
     const resetBtn = document.getElementById('reset-btn');
     const resultsBody = document.getElementById('results-body');
     const fpsValue = document.getElementById('fps-value');
@@ -211,6 +212,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateInteractions() {
         const cfg = CONFIG.points.interaction;
+
+        // On/off: si está desactivado, no hay líneas que unan los puntos.
+        if (!joinToggle.checked) {
+            if (interactions.length) interactions = [];
+            return;
+        }
+
         // Envejece y descarta las líneas caducadas.
         interactions = interactions.filter(it => --it.framesLeft > 0);
 
@@ -309,6 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
     centroidInput.value = CONFIG.behaviors.centroid.count;
     proximityInput.value = CONFIG.points.proximity.distance;
     speedInput.value = CONFIG.points.speed;
+    joinToggle.checked = CONFIG.points.interaction.enabled;
     generateCentroids();
     resizeCanvas();
     buildPoints();
