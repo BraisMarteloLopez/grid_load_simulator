@@ -3,9 +3,12 @@ const CONFIG = {
     grid: {
         rows: 4,
         cols: 4,
+        subRows: 4,  // subdivisiones por chunk (4×4 = 16 sub-celdas)
+        subCols: 4,
         size: 600,   // lado del "mundo" del grid (cuadrado), en px
-        // Color de las líneas y de las celdas del grid.
-        lineColor: '#353a45',
+        // Colores: líneas de chunk (marcadas), subdivisión (tenues) y celdas.
+        lineColor: '#3f4654',
+        subLineColor: '#30343d',
         cellColor: '#2d323d',
         padding: 16, // margen interior del grid en px
     },
