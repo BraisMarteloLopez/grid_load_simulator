@@ -14,7 +14,9 @@ const CONFIG = {
         radius: 1,         // radio de cada punto en px
         opacity: 0.68,     // opacidad normal de los puntos
         speed: 1.5,        // velocidad de movimiento (común a todas las partículas)
-        turn: 1.2,         // cuánto puede cambiar la dirección por frame (radianes)
+        baseSpeed: 1.5,    // velocidad de referencia (1:1) para el tiempo entre decisiones
+        decisionInterval: 1, // frames entre decisiones de dirección a la velocidad base
+        turn: 1.2,         // magnitud del giro en cada decisión (radianes)
         // Probabilidad por frame de cambiar de comportamiento (ganar/perder).
         // ~0.004 ≈ un cambio cada ~4 s a 60 fps.
         behaviorSwitchChance: 0.004,
