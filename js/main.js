@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const joinToggle = document.getElementById('join-toggle');
     const resetBtn = document.getElementById('reset-btn');
     const resultsBody = document.getElementById('results-body');
+    const groupsBody = document.getElementById('groups-body');
     const fpsValue = document.getElementById('fps-value');
     const zoomValue = document.getElementById('zoom-value');
 
@@ -118,6 +119,31 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsBody.innerHTML = html;
     }
 
+    // Grupo (0..count-1) al que pertenece un punto según el chunk en el que está.
+    // Los chunks se numeran en orden ascendente y de derecha a izquierda; con 4
+    // columnas, cada grupo de 4 chunks consecutivos = una fila.
+    function pointGroup(p) {
+        const b = grid.getBounds();
+        const { rows, cols } = CONFIG.grid;
+        const w = (b.maxX - b.minX) / cols;
+        const h = (b.maxY - b.minY) / rows;
+        let col = Math.floor((p.x - b.minX) / w);
+        let row = Math.floor((p.y - b.minY) / h);
+        col = Math.max(0, Math.min(cols - 1, col));
+        row = Math.max(0, Math.min(rows - 1, row));
+        const scanIndex = row * cols + (cols - 1 - col); // derecha → izquierda
+        const perGroup = (rows * cols) / CONFIG.groups.count;
+        return Math.min(CONFIG.groups.count - 1, Math.floor(scanIndex / perGroup));
+    }
+
+    function updateGroups() {
+        const counts = new Array(CONFIG.groups.count).fill(0);
+        for (const p of points) counts[pointGroup(p)] += 1;
+        groupsBody.innerHTML = counts.map((c, i) =>
+            `<p style="color:${CONFIG.groups.colors[i % CONFIG.groups.colors.length]}">Grupo ${i + 1}: <strong>${c}</strong></p>`
+        ).join('');
+    }
+
     // Dibuja el área de todos los centroides (si está activado).
     function drawCentroidArea() {
         const c = behaviors.centroid;
@@ -205,6 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const p of points) p.draw(ctx);
 
         updateResults();
+        updateGroups();
         updateZoom();
         requestAnimationFrame(loop);
     }

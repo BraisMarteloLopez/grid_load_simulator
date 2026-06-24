@@ -3,9 +3,12 @@ const CONFIG = {
     grid: {
         rows: 4,
         cols: 4,
+        subRows: 4,  // subdivisiones por chunk (4×4 = 16 sub-celdas)
+        subCols: 4,
         size: 600,   // lado del "mundo" del grid (cuadrado), en px
-        // Color de las líneas y de las celdas del grid.
-        lineColor: '#353a45',
+        // Colores: líneas de chunk (marcadas), subdivisión (tenues) y celdas.
+        lineColor: '#3f4654',
+        subLineColor: '#30343d',
         cellColor: '#2d323d',
         padding: 16, // margen interior del grid en px
     },
@@ -58,5 +61,11 @@ const CONFIG = {
         // Fracción del lado menor de la pantalla que ocupa el grid cuadrado
         // en la vista por defecto (1 = lo llena).
         fitFill: 1,
+    },
+    // Agrupación de los chunks: los 16 chunks se reparten en `count` grupos,
+    // numerados en orden ascendente y de derecha a izquierda.
+    groups: {
+        count: 4,
+        colors: ['#4f8cff', '#ff9f4f', '#5fd17a', '#c08cff'],
     },
 };
