@@ -22,6 +22,9 @@ class Point {
         this.y = this._rand(bounds.minY, bounds.maxY);
         this.heading = Math.random() * Math.PI * 2;
 
+        // Marcado cuando hay otro punto demasiado cerca (proximidad).
+        this.crowded = false;
+
         // Comportamiento inicial aleatorio.
         this.target = null; // centroide asignado cuando está en modo 'centroid'
         this.behavior = Math.random() < 0.5 ? 'wander' : 'centroid';
@@ -90,7 +93,10 @@ class Point {
     draw(ctx) {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = this.behaviors[this.behavior].color;
+        // Si está demasiado cerca de otro punto, se pinta de rojo claro.
+        ctx.fillStyle = this.crowded
+            ? this.options.proximity.color
+            : this.behaviors[this.behavior].color;
         ctx.fill();
     }
 }

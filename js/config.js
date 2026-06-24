@@ -18,6 +18,12 @@ const CONFIG = {
         // Probabilidad por frame de cambiar de comportamiento (ganar/perder).
         // ~0.004 ≈ un cambio cada ~4 s a 60 fps.
         behaviorSwitchChance: 0.004,
+        // Proximidad: si dos o más puntos están a menos de esta distancia,
+        // se pintan de rojo claro.
+        proximity: {
+            distance: 15,      // distancia (px) para considerarlos "juntos"
+            color: '#ff8a8a',  // rojo claro
+        },
     },
     behaviors: {
         // Color de cada comportamiento (para distinguirlos visualmente).

@@ -180,13 +180,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
         grid.draw();
         drawCentroidArea();
-        for (const p of points) {
-            p.update();
-            p.draw(ctx);
-        }
+
+        // 1) Mueve todos los puntos.
+        for (const p of points) p.update();
+        // 2) Marca los que están demasiado cerca de otro punto.
+        markProximity();
+        // 3) Dibuja.
+        for (const p of points) p.draw(ctx);
+
         updateResults();
         updateZoom();
         requestAnimationFrame(loop);
+    }
+
+    // Marca como "crowded" los puntos con algún vecino a menos de la distancia
+    // configurada (comparación O(n²) con distancia al cuadrado).
+    function markProximity() {
+        const d = CONFIG.points.proximity.distance;
+        const d2 = d * d;
+        for (const p of points) p.crowded = false;
+        for (let i = 0; i < points.length; i++) {
+            const a = points[i];
+            for (let j = i + 1; j < points.length; j++) {
+                const b = points[j];
+                const dx = a.x - b.x;
+                const dy = a.y - b.y;
+                if (dx * dx + dy * dy < d2) {
+                    a.crowded = true;
+                    b.crowded = true;
+                }
+            }
+        }
     }
 
     function updateZoom() {
