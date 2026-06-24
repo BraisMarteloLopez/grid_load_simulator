@@ -109,7 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const wander = points.filter(p => p.behavior === 'wander').length;
         const centroid = points.length - wander;
         resultsBody.innerHTML =
-            `<p>Puntos activos: <strong>${points.length}</strong></p>` +
             `<p style="color:${CONFIG.behaviors.wander.color}">Vagando (wander): <strong>${wander}</strong></p>` +
             `<p style="color:${CONFIG.behaviors.centroid.color}">Pululando (centroide): <strong>${centroid}</strong></p>`;
     }
