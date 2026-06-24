@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const countInput = document.getElementById('point-count');
     const centroidInput = document.getElementById('centroid-count');
     const proximityInput = document.getElementById('proximity-distance');
+    const speedInput = document.getElementById('speed');
     const resetBtn = document.getElementById('reset-btn');
     const resultsBody = document.getElementById('results-body');
     const fpsValue = document.getElementById('fps-value');
@@ -236,10 +237,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Reajusta el canvas cuando cambia el tamaño de la ventana.
     window.addEventListener('resize', resizeCanvas);
 
+    // Velocidad: se aplica en vivo a todas las partículas.
+    speedInput.addEventListener('input', () => {
+        const v = parseFloat(speedInput.value);
+        if (Number.isFinite(v) && v >= 0) CONFIG.points.speed = v;
+    });
+
     // Inicializa el valor del control desde la config y arranca.
     countInput.value = CONFIG.points.count;
     centroidInput.value = CONFIG.behaviors.centroid.count;
     proximityInput.value = CONFIG.points.proximity.distance;
+    speedInput.value = CONFIG.points.speed;
     generateCentroids();
     resizeCanvas();
     buildPoints();

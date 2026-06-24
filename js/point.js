@@ -14,8 +14,8 @@ class Point {
         this.turn = options.turn;
         this.switchChance = options.behaviorSwitchChance;
 
-        // Velocidad propia, elegida al azar dentro del rango (ya no es fija).
-        this.speed = this._rand(options.speedMin, options.speedMax);
+        // La velocidad es común a todas las partículas (sin variación de base);
+        // se lee de options.speed en cada update, así el control la cambia en vivo.
 
         // Posición y dirección iniciales aleatorias.
         this.x = this._rand(bounds.minX, bounds.maxX);
@@ -72,8 +72,9 @@ class Point {
             }
         }
 
-        let nx = this.x + Math.cos(this.heading) * this.speed;
-        let ny = this.y + Math.sin(this.heading) * this.speed;
+        const speed = this.options.speed;
+        let nx = this.x + Math.cos(this.heading) * speed;
+        let ny = this.y + Math.sin(this.heading) * speed;
 
         const b = this.bounds;
         // Rebote en los márgenes del canvas (vale para cualquier comportamiento).

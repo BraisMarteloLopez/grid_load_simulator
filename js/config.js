@@ -13,8 +13,7 @@ const CONFIG = {
         count: 8,          // número de puntos (configurable desde Controles)
         radius: 1,         // radio de cada punto en px
         opacity: 0.68,     // opacidad normal de los puntos
-        speedMin: 0.8,     // velocidad mínima (cada punto elige una al azar)
-        speedMax: 2.5,     // velocidad máxima
+        speed: 1.5,        // velocidad de movimiento (común a todas las partículas)
         turn: 1.2,         // cuánto puede cambiar la dirección por frame (radianes)
         // Probabilidad por frame de cambiar de comportamiento (ganar/perder).
         // ~0.004 ≈ un cambio cada ~4 s a 60 fps.
