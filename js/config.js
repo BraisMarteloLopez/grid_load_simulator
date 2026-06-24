@@ -12,6 +12,7 @@ const CONFIG = {
     points: {
         count: 8,          // número de puntos (configurable desde Controles)
         radius: 1,         // radio de cada punto en px
+        opacity: 0.8,      // opacidad normal de los puntos
         speedMin: 0.8,     // velocidad mínima (cada punto elige una al azar)
         speedMax: 2.5,     // velocidad máxima
         turn: 1.2,         // cuánto puede cambiar la dirección por frame (radianes)
@@ -23,6 +24,7 @@ const CONFIG = {
         proximity: {
             distance: 15,      // distancia (px) para considerarlos "juntos"
             color: '#ff8a8a',  // rojo claro
+            opacity: 1.0,      // opacidad de los puntos en proximidad
         },
     },
     behaviors: {
