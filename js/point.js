@@ -12,7 +12,6 @@ class Point {
 
         this.radius = options.radius;
         this.turn = options.turn;
-        this.switchChance = options.behaviorSwitchChance;
 
         // La velocidad es común a todas las partículas (sin variación de base);
         // se lee de options.speed en cada update, así el control la cambia en vivo.
@@ -48,8 +47,14 @@ class Point {
 
     // De vez en cuando gana/pierde un comportamiento (alterna entre los dos).
     // Al ganar 'centroid' elige un centroide nuevo al azar.
+    // La probabilidad se escala con speed/baseSpeed para que el TIEMPO esperado
+    // entre cambios (atraerse / ir / alejarse del centroide) escale como
+    // baseSpeed/speed, igual que el tiempo entre decisiones de dirección.
     _maybeSwitchBehavior() {
-        if (Math.random() < this.switchChance) {
+        const ref = this.options.baseSpeed;
+        const speed = this.options.speed;
+        const chance = Math.min(1, this.options.behaviorSwitchChance * (speed / Math.max(ref, 1e-6)));
+        if (Math.random() < chance) {
             this.behavior = this.behavior === 'wander' ? 'centroid' : 'wander';
             if (this.behavior === 'centroid') this._pickCentroid();
         }

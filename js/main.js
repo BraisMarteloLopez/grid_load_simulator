@@ -100,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const count = Math.max(0, parseInt(countInput.value, 10) || 0);
         const bounds = grid.getBounds();
         points = [];
+        interactions = [];  // descarta líneas que referencian puntos antiguos
         for (let i = 0; i < count; i++) {
             points.push(new Point(bounds, CONFIG.points, behaviors));
         }
@@ -190,12 +191,73 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const p of points) p.update();
         // 2) Marca los que están demasiado cerca de otro punto.
         markProximity();
-        // 3) Dibuja.
+        // 3) Interacciones (líneas) y su dibujo (por debajo de los puntos).
+        updateInteractions();
+        drawInteractions();
+        // 4) Dibuja los puntos.
         for (const p of points) p.draw(ctx);
 
         updateResults();
         updateZoom();
         requestAnimationFrame(loop);
+    }
+
+    // --- Interacciones ---
+    // Cada `interval` frames, con probabilidad `chance`, una partícula que tenga
+    // a otra dentro del rango (= proximity.distance × rangeMultiplier) crea una
+    // línea de interacción que dura `duration` frames.
+    let interactions = [];
+    let interactionFrame = 0;
+
+    function updateInteractions() {
+        const cfg = CONFIG.points.interaction;
+        // Envejece y descarta las líneas caducadas.
+        interactions = interactions.filter(it => --it.framesLeft > 0);
+
+        interactionFrame += 1;
+        if (interactionFrame % cfg.interval !== 0) return;
+
+        // Rango basado en la distancia de proximidad actual (la del control).
+        const parsed = parseFloat(proximityInput.value);
+        const prox = Number.isFinite(parsed) && parsed >= 0
+            ? parsed
+            : CONFIG.points.proximity.distance;
+        const range = prox * cfg.rangeMultiplier;
+        const range2 = range * range;
+
+        for (let i = 0; i < points.length; i++) {
+            if (Math.random() >= cfg.chance) continue;
+            const a = points[i];
+            const candidates = [];
+            for (let j = 0; j < points.length; j++) {
+                if (j === i) continue;
+                const b = points[j];
+                const dx = a.x - b.x;
+                const dy = a.y - b.y;
+                if (dx * dx + dy * dy < range2) candidates.push(b);
+            }
+            if (candidates.length) {
+                const b = candidates[Math.floor(Math.random() * candidates.length)];
+                interactions.push({ a, b, framesLeft: cfg.duration });
+            }
+        }
+    }
+
+    function drawInteractions() {
+        if (!interactions.length) return;
+        const cfg = CONFIG.points.interaction;
+        ctx.save();
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = cfg.color;
+        ctx.lineWidth = cfg.width;
+        ctx.setLineDash([]);
+        for (const it of interactions) {
+            ctx.beginPath();
+            ctx.moveTo(it.a.x, it.a.y);
+            ctx.lineTo(it.b.x, it.b.y);
+            ctx.stroke();
+        }
+        ctx.restore();
     }
 
     // Marca como "crowded" los puntos con algún vecino a menos de la distancia
