@@ -192,9 +192,12 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const p of points) p.update();
         // 2) Marca los que están demasiado cerca de otro punto.
         markProximity();
-        // 3) Interacciones (líneas) y su dibujo (por debajo de los puntos).
-        updateInteractions();
-        drawInteractions();
+        // 3) Interacciones (líneas): solo si están activadas. Cuando está OFF
+        //    no se ejecuta nada de su procesamiento (ni búsqueda, ni dibujo).
+        if (joinToggle.checked) {
+            updateInteractions();
+            drawInteractions();
+        }
         // 4) Dibuja los puntos.
         for (const p of points) p.draw(ctx);
 
@@ -212,12 +215,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateInteractions() {
         const cfg = CONFIG.points.interaction;
-
-        // On/off: si está desactivado, no hay líneas que unan los puntos.
-        if (!joinToggle.checked) {
-            if (interactions.length) interactions = [];
-            return;
-        }
 
         // Envejece y descarta las líneas caducadas.
         interactions = interactions.filter(it => --it.framesLeft > 0);
@@ -310,6 +307,11 @@ document.addEventListener('DOMContentLoaded', () => {
     speedInput.addEventListener('input', () => {
         const v = parseFloat(speedInput.value);
         if (Number.isFinite(v) && v >= 0) CONFIG.points.speed = v;
+    });
+
+    // Al desactivar "Unir puntos", descarta las líneas activas al instante.
+    joinToggle.addEventListener('change', () => {
+        if (!joinToggle.checked) interactions = [];
     });
 
     // Inicializa el valor del control desde la config y arranca.
