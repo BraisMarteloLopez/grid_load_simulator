@@ -10,9 +10,23 @@ const CONFIG = {
     },
     points: {
         count: 8,          // número de puntos (configurable desde Controles)
-        radius: 5,         // radio de cada punto en px
-        color: '#4f8cff',  // color de los puntos
-        speed: 1.5,        // velocidad de movimiento en px/frame
-        turn: 0.4,         // cuánto puede cambiar la dirección por frame (radianes)
+        radius: 1,         // radio de cada punto en px
+        speedMin: 0.8,     // velocidad mínima (cada punto elige una al azar)
+        speedMax: 2.5,     // velocidad máxima
+        turn: 1.2,         // cuánto puede cambiar la dirección por frame (radianes)
+        // Probabilidad por frame de cambiar de comportamiento (ganar/perder).
+        // ~0.004 ≈ un cambio cada ~4 s a 60 fps.
+        behaviorSwitchChance: 0.004,
+    },
+    behaviors: {
+        // Color de cada comportamiento (para distinguirlos visualmente).
+        wander:   { color: '#4f8cff' }, // vaga libre por todo el canvas
+        centroid: {
+            color: '#ff9f4f',           // pulula alrededor de un centroide
+            x: 240,                     // centroide X (px)
+            y: 240,                     // centroide Y (px)
+            radius: 80,                 // radio del área en el que pulula (px)
+            showArea: true,             // dibujar el área del centroide
+        },
     },
 };
