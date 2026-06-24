@@ -3,10 +3,11 @@ const CONFIG = {
     grid: {
         rows: 4,
         cols: 4,
+        size: 600,   // lado del "mundo" del grid (cuadrado), en px
         // Color de las líneas y de las celdas del grid.
         lineColor: '#353a45',
         cellColor: '#2d323d',
-        padding: 16, // margen interior del canvas en px
+        padding: 16, // margen interior del grid en px
     },
     points: {
         count: 8,          // número de puntos (configurable desde Controles)
@@ -33,5 +34,8 @@ const CONFIG = {
         minScale: 0.25,    // zoom mínimo (alejar)
         maxScale: 8,       // zoom máximo (acercar)
         zoomSpeed: 0.0015, // sensibilidad de la rueda
+        // Fracción del lado menor de la pantalla que ocupa el grid cuadrado
+        // en la vista por defecto (1 = lo llena).
+        fitFill: 1,
     },
 };

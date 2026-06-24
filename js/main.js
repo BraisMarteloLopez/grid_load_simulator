@@ -28,8 +28,23 @@ document.addEventListener('DOMContentLoaded', () => {
         },
     };
 
-    // Ajusta el tamaño interno del canvas al tamaño que ocupa en pantalla,
-    // y recalcula márgenes, centroide y posición de los puntos existentes.
+    // El centroide es fijo dentro del mundo cuadrado (posición relativa).
+    function resolveCentroid() {
+        const bounds = grid.getBounds();
+        const cc = CONFIG.behaviors.centroid;
+        behaviors.centroid.x = bounds.minX + cc.cx * (bounds.maxX - bounds.minX);
+        behaviors.centroid.y = bounds.minY + cc.cy * (bounds.maxY - bounds.minY);
+    }
+
+    // Encuadra el grid cuadrado para que llene la pantalla manteniendo la
+    // proporción 1:1, centrado.
+    function fitCamera() {
+        camera.fitSquare(canvas.width, canvas.height, CONFIG.grid.size, CONFIG.view.fitFill);
+    }
+
+    // Ajusta el tamaño interno del canvas al que ocupa en pantalla y reencuadra.
+    // El mundo del grid es cuadrado y fijo, así que los puntos no cambian de
+    // márgenes al redimensionar: solo cambia la cámara.
     function resizeCanvas() {
         const w = Math.round(canvas.clientWidth);
         const h = Math.round(canvas.clientHeight);
@@ -37,19 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
             canvas.width = w;
             canvas.height = h;
         }
-        const bounds = grid.getBounds();
-
-        // Recoloca el centroide (posición relativa -> píxeles).
-        const cc = CONFIG.behaviors.centroid;
-        behaviors.centroid.x = bounds.minX + cc.cx * (bounds.maxX - bounds.minX);
-        behaviors.centroid.y = bounds.minY + cc.cy * (bounds.maxY - bounds.minY);
-
-        // Actualiza los márgenes de los puntos ya existentes y los reencaja.
-        for (const p of points) {
-            p.bounds = bounds;
-            p.x = Math.max(bounds.minX, Math.min(bounds.maxX, p.x));
-            p.y = Math.max(bounds.minY, Math.min(bounds.maxY, p.y));
-        }
+        fitCamera();
     }
 
     // --- Medición de FPS ---
@@ -172,10 +175,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (zoomValue) zoomValue.textContent = Math.round(camera.scale * 100) + '%';
     }
 
-    // Reset: aplica los nuevos cambios (regenera los puntos) y la vista.
+    // Reset: aplica los nuevos cambios (regenera los puntos) y reencuadra.
     resetBtn.addEventListener('click', () => {
         buildPoints();
-        camera.reset();
+        fitCamera();
     });
 
     // Reajusta el canvas cuando cambia el tamaño de la ventana.
@@ -183,6 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Inicializa el valor del control desde la config y arranca.
     countInput.value = CONFIG.points.count;
+    resolveCentroid();
     resizeCanvas();
     buildPoints();
     requestAnimationFrame(loop);

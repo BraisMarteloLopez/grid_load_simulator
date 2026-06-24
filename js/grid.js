@@ -5,31 +5,31 @@ class Grid {
         this.ctx = canvas.getContext('2d');
         this.rows = options.rows;
         this.cols = options.cols;
+        this.size = options.size; // lado del mundo (cuadrado)
         this.lineColor = options.lineColor;
         this.cellColor = options.cellColor;
         this.padding = options.padding;
     }
 
-    // Márgenes interiores del canvas donde "viven" los puntos.
+    // Márgenes interiores del mundo (cuadrado) donde "viven" los puntos.
     getBounds() {
         const r = this.padding;
         return {
             minX: r,
             minY: r,
-            maxX: this.canvas.width - r,
-            maxY: this.canvas.height - r,
+            maxX: this.size - r,
+            maxY: this.size - r,
         };
     }
 
     // El bucle limpia el canvas (en coordenadas de pantalla) antes de aplicar
     // la cámara, así que aquí ya no se borra.
     draw() {
-        const { ctx, canvas, rows, cols, padding } = this;
+        const { ctx, size, rows, cols, padding } = this;
 
-        const areaW = canvas.width - padding * 2;
-        const areaH = canvas.height - padding * 2;
-        const cellW = areaW / cols;
-        const cellH = areaH / rows;
+        const area = size - padding * 2;
+        const cellW = area / cols;
+        const cellH = area / rows;
 
         // Celdas
         ctx.fillStyle = this.cellColor;
