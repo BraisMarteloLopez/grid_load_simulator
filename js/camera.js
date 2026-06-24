@@ -38,10 +38,13 @@ class Camera {
         this.offsetY += dy;
     }
 
-    // Vuelve a la vista inicial (sin zoom ni paneo).
-    reset() {
-        this.scale = 1;
-        this.offsetX = 0;
-        this.offsetY = 0;
+    // Encuadra un mundo cuadrado de lado `worldSize` dentro de un canvas de
+    // (canvasW x canvasH): lo escala para llenar el lado menor (por `fill`)
+    // manteniendo la proporción cuadrada, y lo centra.
+    fitSquare(canvasW, canvasH, worldSize, fill = 1) {
+        const s = (Math.min(canvasW, canvasH) / worldSize) * fill;
+        this.scale = s;
+        this.offsetX = (canvasW - worldSize * s) / 2;
+        this.offsetY = (canvasH - worldSize * s) / 2;
     }
 }

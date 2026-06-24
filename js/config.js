@@ -3,10 +3,11 @@ const CONFIG = {
     grid: {
         rows: 4,
         cols: 4,
+        size: 600,   // lado del "mundo" del grid (cuadrado), en px
         // Color de las líneas y de las celdas del grid.
         lineColor: '#353a45',
         cellColor: '#2d323d',
-        padding: 16, // margen interior del canvas en px
+        padding: 16, // margen interior del grid en px
     },
     points: {
         count: 8,          // número de puntos (configurable desde Controles)
@@ -22,16 +23,19 @@ const CONFIG = {
         // Color de cada comportamiento (para distinguirlos visualmente).
         wander:   { color: '#4f8cff' }, // vaga libre por todo el canvas
         centroid: {
-            color: '#ff9f4f',           // pulula alrededor de un centroide
-            cx: 0.5,                     // posición X relativa al área (0..1)
-            cy: 0.5,                     // posición Y relativa al área (0..1)
-            radius: 80,                 // radio del área en el que pulula (px)
-            showArea: true,             // dibujar el área del centroide
+            color: '#ff9f4f',  // pulula alrededor de un centroide
+            count: 5,          // número de centroides repartidos por el grid
+            radius: 35,        // radio del área de cada centroide (px)
+            jitter: 0.7,       // aleatoriedad de la posición respecto a la rejilla (0..1)
+            showArea: true,    // dibujar el área de los centroides
         },
     },
     view: {
         minScale: 0.25,    // zoom mínimo (alejar)
         maxScale: 8,       // zoom máximo (acercar)
         zoomSpeed: 0.0015, // sensibilidad de la rueda
+        // Fracción del lado menor de la pantalla que ocupa el grid cuadrado
+        // en la vista por defecto (1 = lo llena).
+        fitFill: 1,
     },
 };

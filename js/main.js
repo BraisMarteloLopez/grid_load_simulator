@@ -21,15 +21,45 @@ document.addEventListener('DOMContentLoaded', () => {
         wander: CONFIG.behaviors.wander,
         centroid: {
             color: CONFIG.behaviors.centroid.color,
-            x: 0,
-            y: 0,
             radius: CONFIG.behaviors.centroid.radius,
             showArea: CONFIG.behaviors.centroid.showArea,
+            list: [], // centroides repartidos por el grid (se generan abajo)
         },
     };
 
-    // Ajusta el tamaño interno del canvas al tamaño que ocupa en pantalla,
-    // y recalcula márgenes, centroide y posición de los puntos existentes.
+    // Genera varios centroides repartidos por el grid mediante una rejilla
+    // regular + jitter aleatorio (posición "más o menos aleatoria").
+    function generateCentroids() {
+        const bounds = grid.getBounds();
+        const cc = CONFIG.behaviors.centroid;
+        const n = Math.max(1, cc.count);
+        const cols = Math.ceil(Math.sqrt(n));
+        const rows = Math.ceil(n / cols);
+        const cellW = (bounds.maxX - bounds.minX) / cols;
+        const cellH = (bounds.maxY - bounds.minY) / rows;
+        const list = [];
+        for (let i = 0; i < n; i++) {
+            const gx = i % cols;
+            const gy = Math.floor(i / cols);
+            let x = bounds.minX + (gx + 0.5) * cellW + (Math.random() - 0.5) * cellW * cc.jitter;
+            let y = bounds.minY + (gy + 0.5) * cellH + (Math.random() - 0.5) * cellH * cc.jitter;
+            // Mantén el área del centroide dentro de los márgenes.
+            x = Math.max(bounds.minX + cc.radius, Math.min(bounds.maxX - cc.radius, x));
+            y = Math.max(bounds.minY + cc.radius, Math.min(bounds.maxY - cc.radius, y));
+            list.push({ x, y });
+        }
+        behaviors.centroid.list = list;
+    }
+
+    // Encuadra el grid cuadrado para que llene la pantalla manteniendo la
+    // proporción 1:1, centrado.
+    function fitCamera() {
+        camera.fitSquare(canvas.width, canvas.height, CONFIG.grid.size, CONFIG.view.fitFill);
+    }
+
+    // Ajusta el tamaño interno del canvas al que ocupa en pantalla y reencuadra.
+    // El mundo del grid es cuadrado y fijo, así que los puntos no cambian de
+    // márgenes al redimensionar: solo cambia la cámara.
     function resizeCanvas() {
         const w = Math.round(canvas.clientWidth);
         const h = Math.round(canvas.clientHeight);
@@ -37,19 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
             canvas.width = w;
             canvas.height = h;
         }
-        const bounds = grid.getBounds();
-
-        // Recoloca el centroide (posición relativa -> píxeles).
-        const cc = CONFIG.behaviors.centroid;
-        behaviors.centroid.x = bounds.minX + cc.cx * (bounds.maxX - bounds.minX);
-        behaviors.centroid.y = bounds.minY + cc.cy * (bounds.maxY - bounds.minY);
-
-        // Actualiza los márgenes de los puntos ya existentes y los reencaja.
-        for (const p of points) {
-            p.bounds = bounds;
-            p.x = Math.max(bounds.minX, Math.min(bounds.maxX, p.x));
-            p.y = Math.max(bounds.minY, Math.min(bounds.maxY, p.y));
-        }
+        fitCamera();
     }
 
     // --- Medición de FPS ---
@@ -93,17 +111,19 @@ document.addEventListener('DOMContentLoaded', () => {
             `<p style="color:${CONFIG.behaviors.centroid.color}">Pululando (centroide): <strong>${centroid}</strong></p>`;
     }
 
-    // Dibuja el área del centroide (si está activada).
+    // Dibuja el área de todos los centroides (si está activado).
     function drawCentroidArea() {
         const c = behaviors.centroid;
         if (!c.showArea) return;
         ctx.save();
-        ctx.beginPath();
-        ctx.arc(c.x, c.y, c.radius, 0, Math.PI * 2);
         ctx.strokeStyle = c.color;
         ctx.globalAlpha = 0.35;
         ctx.setLineDash([4, 4]);
-        ctx.stroke();
+        for (const p of c.list) {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, c.radius, 0, Math.PI * 2);
+            ctx.stroke();
+        }
         ctx.restore();
     }
 
@@ -172,10 +192,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (zoomValue) zoomValue.textContent = Math.round(camera.scale * 100) + '%';
     }
 
-    // Reset: aplica los nuevos cambios (regenera los puntos) y la vista.
+    // Reset: regenera centroides (nueva ubicación), puntos y reencuadra.
     resetBtn.addEventListener('click', () => {
+        generateCentroids();
         buildPoints();
-        camera.reset();
+        fitCamera();
     });
 
     // Reajusta el canvas cuando cambia el tamaño de la ventana.
@@ -183,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Inicializa el valor del control desde la config y arranca.
     countInput.value = CONFIG.points.count;
+    generateCentroids();
     resizeCanvas();
     buildPoints();
     requestAnimationFrame(loop);

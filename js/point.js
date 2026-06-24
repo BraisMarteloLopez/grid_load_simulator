@@ -3,7 +3,7 @@
 //
 // Comportamientos:
 //   - 'wander'   : vaga libre por todo el canvas (caminata aleatoria).
-//   - 'centroid' : pulula alrededor de un centroide dentro de un radio.
+//   - 'centroid' : pulula alrededor de uno de los centroides (elegido al azar).
 class Point {
     constructor(bounds, options, behaviors) {
         this.bounds = bounds;        // { minX, minY, maxX, maxY }
@@ -23,17 +23,29 @@ class Point {
         this.heading = Math.random() * Math.PI * 2;
 
         // Comportamiento inicial aleatorio.
+        this.target = null; // centroide asignado cuando está en modo 'centroid'
         this.behavior = Math.random() < 0.5 ? 'wander' : 'centroid';
+        if (this.behavior === 'centroid') this._pickCentroid();
     }
 
     _rand(min, max) {
         return min + Math.random() * (max - min);
     }
 
+    // Elige al azar uno de los centroides disponibles.
+    _pickCentroid() {
+        const list = this.behaviors.centroid.list;
+        this.target = (list && list.length)
+            ? list[Math.floor(Math.random() * list.length)]
+            : null;
+    }
+
     // De vez en cuando gana/pierde un comportamiento (alterna entre los dos).
+    // Al ganar 'centroid' elige un centroide nuevo al azar.
     _maybeSwitchBehavior() {
         if (Math.random() < this.switchChance) {
             this.behavior = this.behavior === 'wander' ? 'centroid' : 'wander';
+            if (this.behavior === 'centroid') this._pickCentroid();
         }
     }
 
@@ -44,13 +56,14 @@ class Point {
         // Giro aleatorio base (caminata aleatoria).
         this.heading += (Math.random() - 0.5) * this.turn;
 
-        // Comportamiento centroide: si se aleja más del radio, vuelve hacia él.
-        if (this.behavior === 'centroid') {
-            const c = this.behaviors.centroid;
-            const dx = c.x - this.x;
-            const dy = c.y - this.y;
+        // Comportamiento centroide: si se aleja más del radio de SU centroide,
+        // vuelve hacia él.
+        if (this.behavior === 'centroid' && this.target) {
+            const radius = this.behaviors.centroid.radius;
+            const dx = this.target.x - this.x;
+            const dy = this.target.y - this.y;
             const dist = Math.hypot(dx, dy);
-            if (dist > c.radius) {
+            if (dist > radius) {
                 // Apunta hacia el centroide, con algo de ruido para que "pulule".
                 this.heading = Math.atan2(dy, dx) + (Math.random() - 0.5) * this.turn;
             }
