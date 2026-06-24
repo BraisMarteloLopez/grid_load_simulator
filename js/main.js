@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const countInput = document.getElementById('point-count');
     const centroidInput = document.getElementById('centroid-count');
+    const proximityInput = document.getElementById('proximity-distance');
     const resetBtn = document.getElementById('reset-btn');
     const resultsBody = document.getElementById('results-body');
     const fpsValue = document.getElementById('fps-value');
@@ -196,7 +197,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Marca como "crowded" los puntos con algún vecino a menos de la distancia
     // configurada (comparación O(n²) con distancia al cuadrado).
     function markProximity() {
-        const d = CONFIG.points.proximity.distance;
+        // Distancia configurable (acepta decimales); se aplica al instante.
+        const parsed = parseFloat(proximityInput.value);
+        const d = Number.isFinite(parsed) && parsed >= 0
+            ? parsed
+            : CONFIG.points.proximity.distance;
         const d2 = d * d;
         for (const p of points) p.crowded = false;
         for (let i = 0; i < points.length; i++) {
@@ -230,6 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Inicializa el valor del control desde la config y arranca.
     countInput.value = CONFIG.points.count;
     centroidInput.value = CONFIG.behaviors.centroid.count;
+    proximityInput.value = CONFIG.points.proximity.distance;
     generateCentroids();
     resizeCanvas();
     buildPoints();
