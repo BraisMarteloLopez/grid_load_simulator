@@ -91,12 +91,14 @@ class Point {
     }
 
     draw(ctx) {
+        const prox = this.options.proximity;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        // Si está demasiado cerca de otro punto, se pinta de rojo claro.
-        ctx.fillStyle = this.crowded
-            ? this.options.proximity.color
-            : this.behaviors[this.behavior].color;
+        // Si está demasiado cerca de otro punto: rojo claro y opacidad plena;
+        // en caso normal, su color de comportamiento con opacidad reducida.
+        ctx.globalAlpha = this.crowded ? prox.opacity : this.options.opacity;
+        ctx.fillStyle = this.crowded ? prox.color : this.behaviors[this.behavior].color;
         ctx.fill();
+        ctx.globalAlpha = 1;
     }
 }
