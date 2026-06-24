@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const camera = new Camera(CONFIG.view);
 
     const countInput = document.getElementById('point-count');
+    const centroidInput = document.getElementById('centroid-count');
     const resetBtn = document.getElementById('reset-btn');
     const resultsBody = document.getElementById('results-body');
     const fpsValue = document.getElementById('fps-value');
@@ -32,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function generateCentroids() {
         const bounds = grid.getBounds();
         const cc = CONFIG.behaviors.centroid;
-        const n = Math.max(1, cc.count);
+        const n = Math.max(1, parseInt(centroidInput.value, 10) || cc.count);
         const cols = Math.ceil(Math.sqrt(n));
         const rows = Math.ceil(n / cols);
         const cellW = (bounds.maxX - bounds.minX) / cols;
@@ -204,6 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Inicializa el valor del control desde la config y arranca.
     countInput.value = CONFIG.points.count;
+    centroidInput.value = CONFIG.behaviors.centroid.count;
     generateCentroids();
     resizeCanvas();
     buildPoints();
