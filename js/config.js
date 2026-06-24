@@ -27,6 +27,17 @@ const CONFIG = {
             color: '#ff3b3b',  // rojo claro, inequívocamente rojo (distinto del naranja)
             opacity: 1.0,      // opacidad de los puntos en proximidad
         },
+        // Interacción: muy ocasionalmente, una partícula con otra dentro del
+        // rango (= proximity.distance × rangeMultiplier) "interactúa" con ella
+        // dibujando una línea durante unos frames.
+        interaction: {
+            rangeMultiplier: 9,  // rango = proximity.distance × este factor
+            chance: 0.02,        // probabilidad (muy ocasional) en cada evaluación
+            interval: 10,        // se evalúa cada N frames
+            duration: 20,        // frames que dura la línea
+            color: '#b69cff',    // color de la línea de interacción
+            width: 1,            // grosor de la línea (px de mundo)
+        },
     },
     behaviors: {
         // Color de cada comportamiento (para distinguirlos visualmente).
