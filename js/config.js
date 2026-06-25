@@ -71,5 +71,6 @@ const CONFIG = {
         shadeOpacity: 0.15,  // opacidad del sombreado
         balanceEnabled: true, // on/off del balanceo dinámico
         balanceInterval: 90, // frames por ciclo de rebalanceo dinámico
+        granularity: 'chunk', // unidad de balanceo: 'chunk' o 'sub'
     },
 };
