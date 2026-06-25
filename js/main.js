@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const speedInput = document.getElementById('speed');
     const joinToggle = document.getElementById('join-toggle');
     const shadeToggle = document.getElementById('shade-toggle');
+    const balanceToggle = document.getElementById('balance-toggle');
     const resetBtn = document.getElementById('reset-btn');
     const resultsBody = document.getElementById('results-body');
     const groupsBody = document.getElementById('groups-body');
@@ -327,7 +328,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Carga actual por chunk; rebalanceo de grupos a ciclo vencido.
         const chunkCounts = computeChunkCounts();
         balanceFrame += 1;
-        if (balanceFrame % CONFIG.groups.balanceInterval === 0) balanceGroups(chunkCounts);
+        if (balanceToggle.checked && balanceFrame % CONFIG.groups.balanceInterval === 0) {
+            balanceGroups(chunkCounts);
+        }
 
         updateResults();
         updateGroups(chunkCounts);
@@ -444,6 +447,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!joinToggle.checked) interactions = [];
     });
 
+    // Al desactivar el balanceo dinámico, vuelve al mapeo estático.
+    balanceToggle.addEventListener('change', () => {
+        if (!balanceToggle.checked) initChunkGroupMap();
+    });
+
     // Inicializa el valor del control desde la config y arranca.
     countInput.value = CONFIG.points.count;
     centroidInput.value = CONFIG.behaviors.centroid.count;
@@ -451,6 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
     speedInput.value = CONFIG.points.speed;
     joinToggle.checked = CONFIG.points.interaction.enabled;
     shadeToggle.checked = CONFIG.groups.shadeEnabled;
+    balanceToggle.checked = CONFIG.groups.balanceEnabled;
     initChunkGroupMap();
     generateCentroids();
     resizeCanvas();
