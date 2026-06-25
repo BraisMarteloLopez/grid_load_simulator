@@ -131,6 +131,17 @@ body {
     accent-color: var(--accent);
 }
 
+.control-row select.select {
+    width: 100%;
+    padding: 2px 4px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 0.72rem;
+    cursor: pointer;
+}
+
 .btn {
     width: 100%;
     margin-top: 6px;

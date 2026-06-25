@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const joinToggle = document.getElementById('join-toggle');
     const shadeToggle = document.getElementById('shade-toggle');
     const balanceToggle = document.getElementById('balance-toggle');
+    const granularitySelect = document.getElementById('balance-granularity');
     const resetBtn = document.getElementById('reset-btn');
     const resultsBody = document.getElementById('results-body');
     const groupsBody = document.getElementById('groups-body');
@@ -130,21 +131,19 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.min(CONFIG.groups.count - 1, Math.floor(scanIndex / perGroup));
     }
 
-    // Mapa dinámico chunk → grupo (se rebalancea cada ciclo).
-    let chunkGroupMap = [];
-    function initChunkGroupMap() {
-        const { rows, cols } = CONFIG.grid;
-        chunkGroupMap = Array.from({ length: rows }, (_, r) =>
-            Array.from({ length: cols }, (_, c) => staticGroupOfChunk(r, c)));
+    // Mapa dinámico sub-celda → grupo. Es la unidad común: en granularidad
+    // 'chunk' todas las sub-celdas de un chunk comparten grupo; en 'sub' cada
+    // sub-celda va por libre.
+    let subGroupMap = [];
+    function initSubGroupMap() {
+        const { rows, cols, subRows, subCols } = CONFIG.grid;
+        const totalRows = rows * subRows, totalCols = cols * subCols;
+        subGroupMap = Array.from({ length: totalRows }, (_, sr) =>
+            Array.from({ length: totalCols }, (_, sc) =>
+                staticGroupOfChunk(Math.floor(sr / subRows), Math.floor(sc / subCols))));
     }
 
-    // Grupo actual de un chunk según el mapa dinámico.
-    function groupOfChunk(row, col) {
-        return chunkGroupMap[row][col];
-    }
-
-    // Sub-celda (sr, sc) de la rejilla fina (rows*subRows × cols*subCols) en
-    // la que está un punto.
+    // Sub-celda (sr, sc) de la rejilla fina en la que está un punto.
     function pointSubCell(p) {
         const b = grid.getBounds();
         const { rows, cols, subRows, subCols } = CONFIG.grid;
@@ -159,8 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return { sr, sc };
     }
 
-    // Carga (nº de puntos) de cada chunk, contada por sub-celda y agregada.
-    function computeChunkCounts() {
+    // Carga (nº de puntos) por sub-celda.
+    function computeSubCounts() {
         const { rows, cols, subRows, subCols } = CONFIG.grid;
         const totalCols = cols * subCols;
         const totalRows = rows * subRows;
@@ -169,72 +168,101 @@ document.addEventListener('DOMContentLoaded', () => {
             const { sr, sc } = pointSubCell(p);
             sub[sr][sc] += 1;
         }
-        const chunk = Array.from({ length: rows }, () => new Array(cols).fill(0));
-        for (let sr = 0; sr < totalRows; sr++) {
-            for (let sc = 0; sc < totalCols; sc++) {
-                chunk[Math.floor(sr / subRows)][Math.floor(sc / subCols)] += sub[sr][sc];
-            }
-        }
-        return chunk;
+        return sub;
     }
 
-    // Rebalanceo: reparte los chunks entre los grupos para igualar los puntos lo
-    // máximo posible (greedy: chunk más cargado → grupo menos cargado). El nº de
-    // chunks por grupo puede variar.
-    function balanceGroups(chunkCounts) {
-        const { rows, cols } = CONFIG.grid;
+    // Reparto greedy de una lista de unidades {key, count} entre los grupos
+    // (unidad más cargada → grupo menos cargado). Devuelve el grupo por key.
+    function greedyAssign(units) {
         const n = CONFIG.groups.count;
-        const list = [];
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) list.push({ r, c, count: chunkCounts[r][c] });
-        }
-        list.sort((a, b) => b.count - a.count);
+        units.sort((a, b) => b.count - a.count);
         const loads = new Array(n).fill(0);
-        for (const it of list) {
+        for (const u of units) {
             let g = 0;
             for (let k = 1; k < n; k++) if (loads[k] < loads[g]) g = k;
-            chunkGroupMap[it.r][it.c] = g;
-            loads[g] += it.count;
+            u.group = g;
+            loads[g] += u.count;
+        }
+        return units;
+    }
+
+    // Rebalanceo: reparte la carga entre grupos según la granularidad elegida.
+    function balanceGroups(subCounts) {
+        const { rows, cols, subRows, subCols } = CONFIG.grid;
+        const totalRows = rows * subRows, totalCols = cols * subCols;
+
+        if (granularitySelect.value === 'sub') {
+            // Cada sub-celda es una unidad independiente.
+            const units = [];
+            for (let sr = 0; sr < totalRows; sr++) {
+                for (let sc = 0; sc < totalCols; sc++) units.push({ sr, sc, count: subCounts[sr][sc] });
+            }
+            greedyAssign(units);
+            for (const u of units) subGroupMap[u.sr][u.sc] = u.group;
+        } else {
+            // Unidad = chunk (todas sus sub-celdas comparten grupo).
+            const units = [];
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    let count = 0;
+                    for (let i = 0; i < subRows; i++) {
+                        for (let j = 0; j < subCols; j++) count += subCounts[r * subRows + i][c * subCols + j];
+                    }
+                    units.push({ r, c, count });
+                }
+            }
+            greedyAssign(units);
+            for (const u of units) {
+                for (let i = 0; i < subRows; i++) {
+                    for (let j = 0; j < subCols; j++) subGroupMap[u.r * subRows + i][u.c * subCols + j] = u.group;
+                }
+            }
         }
     }
 
-    // Sombrea cada chunk con el color de su grupo (translúcido).
+    // Sombrea cada sub-celda con el color de su grupo (translúcido). En modo
+    // 'chunk' las sub-celdas de un chunk comparten color → se ve por chunk.
     function drawGroupShading() {
         const b = grid.getBounds();
-        const { rows, cols } = CONFIG.grid;
-        const cw = (b.maxX - b.minX) / cols;
-        const ch = (b.maxY - b.minY) / rows;
+        const { rows, cols, subRows, subCols } = CONFIG.grid;
+        const totalRows = rows * subRows, totalCols = cols * subCols;
+        const sw = (b.maxX - b.minX) / totalCols;
+        const sh = (b.maxY - b.minY) / totalRows;
         const colors = CONFIG.groups.colors;
         ctx.save();
         ctx.globalAlpha = CONFIG.groups.shadeOpacity;
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) {
-                ctx.fillStyle = colors[groupOfChunk(r, c) % colors.length];
-                ctx.fillRect(b.minX + c * cw, b.minY + r * ch, cw, ch);
+        for (let sr = 0; sr < totalRows; sr++) {
+            for (let sc = 0; sc < totalCols; sc++) {
+                ctx.fillStyle = colors[subGroupMap[sr][sc] % colors.length];
+                ctx.fillRect(b.minX + sc * sw, b.minY + sr * sh, sw, sh);
             }
         }
         ctx.restore();
     }
 
-    function updateGroups(chunkCounts) {
-        const { rows, cols } = CONFIG.grid;
+    function updateGroups(subCounts) {
+        const { rows, cols, subRows, subCols } = CONFIG.grid;
+        const totalRows = rows * subRows, totalCols = cols * subCols;
         const n = CONFIG.groups.count;
 
-        // Total de puntos y nº de chunks por grupo, según el mapa dinámico.
+        // Total de puntos y nº de sub-celdas por grupo, según el mapa dinámico.
         const counts = new Array(n).fill(0);
-        const chunksPer = new Array(n).fill(0);
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) {
-                const g = groupOfChunk(r, c);
-                counts[g] += chunkCounts[r][c];
-                chunksPer[g] += 1;
+        const cellsPer = new Array(n).fill(0);
+        for (let sr = 0; sr < totalRows; sr++) {
+            for (let sc = 0; sc < totalCols; sc++) {
+                const g = subGroupMap[sr][sc];
+                counts[g] += subCounts[sr][sc];
+                cellsPer[g] += 1;
             }
         }
 
         const total = points.length;
+        const isSub = granularitySelect.value === 'sub';
+        const perChunk = subRows * subCols;
         groupsBody.innerHTML = counts.map((c, i) => {
             const pct = total ? Math.round((c / total) * 100) : 0;
-            return `<p style="color:${CONFIG.groups.colors[i % CONFIG.groups.colors.length]}">Grupo ${i + 1}: <strong>${c}</strong> (${pct}%) · ${chunksPer[i]} ch</p>`;
+            const units = isSub ? `${cellsPer[i]} sc` : `${cellsPer[i] / perChunk} ch`;
+            return `<p style="color:${CONFIG.groups.colors[i % CONFIG.groups.colors.length]}">Grupo ${i + 1}: <strong>${c}</strong> (${pct}%) · ${units}</p>`;
         }).join('');
     }
 
@@ -325,15 +353,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // 4) Dibuja los puntos.
         for (const p of points) p.draw(ctx);
 
-        // Carga actual por chunk; rebalanceo de grupos a ciclo vencido.
-        const chunkCounts = computeChunkCounts();
+        // Carga actual por sub-celda; rebalanceo de grupos a ciclo vencido.
+        const subCounts = computeSubCounts();
         balanceFrame += 1;
         if (balanceToggle.checked && balanceFrame % CONFIG.groups.balanceInterval === 0) {
-            balanceGroups(chunkCounts);
+            balanceGroups(subCounts);
         }
 
         updateResults();
-        updateGroups(chunkCounts);
+        updateGroups(subCounts);
         updateZoom();
         requestAnimationFrame(loop);
     }
@@ -449,7 +477,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Al desactivar el balanceo dinámico, vuelve al mapeo estático.
     balanceToggle.addEventListener('change', () => {
-        if (!balanceToggle.checked) initChunkGroupMap();
+        if (!balanceToggle.checked) initSubGroupMap();
+    });
+
+    // Al cambiar la granularidad: rebalancea ya (si está activo) o reinicia.
+    granularitySelect.addEventListener('change', () => {
+        if (balanceToggle.checked) balanceGroups(computeSubCounts());
+        else initSubGroupMap();
     });
 
     // Inicializa el valor del control desde la config y arranca.
@@ -460,7 +494,8 @@ document.addEventListener('DOMContentLoaded', () => {
     joinToggle.checked = CONFIG.points.interaction.enabled;
     shadeToggle.checked = CONFIG.groups.shadeEnabled;
     balanceToggle.checked = CONFIG.groups.balanceEnabled;
-    initChunkGroupMap();
+    granularitySelect.value = CONFIG.groups.granularity;
+    initSubGroupMap();
     generateCentroids();
     resizeCanvas();
     buildPoints();
