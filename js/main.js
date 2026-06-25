@@ -163,9 +163,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateGroups() {
         const counts = new Array(CONFIG.groups.count).fill(0);
         for (const p of points) counts[pointGroup(p)] += 1;
-        groupsBody.innerHTML = counts.map((c, i) =>
-            `<p style="color:${CONFIG.groups.colors[i % CONFIG.groups.colors.length]}">Grupo ${i + 1}: <strong>${c}</strong></p>`
-        ).join('');
+        const total = points.length;
+        groupsBody.innerHTML = counts.map((c, i) => {
+            const pct = total ? Math.round((c / total) * 100) : 0;
+            return `<p style="color:${CONFIG.groups.colors[i % CONFIG.groups.colors.length]}">Grupo ${i + 1}: <strong>${c}</strong> (${pct}%)</p>`;
+        }).join('');
     }
 
     // Dibuja el área de todos los centroides (si está activado).
