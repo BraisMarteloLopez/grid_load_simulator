@@ -129,17 +129,20 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.min(CONFIG.groups.count - 1, Math.floor(scanIndex / perGroup));
     }
 
-    // Grupo al que pertenece un punto según el chunk en el que está.
-    function pointGroup(p) {
+    // Sub-celda (sr, sc) de la rejilla fina (rows*subRows × cols*subCols) en
+    // la que está un punto.
+    function pointSubCell(p) {
         const b = grid.getBounds();
-        const { rows, cols } = CONFIG.grid;
-        const w = (b.maxX - b.minX) / cols;
-        const h = (b.maxY - b.minY) / rows;
-        let col = Math.floor((p.x - b.minX) / w);
-        let row = Math.floor((p.y - b.minY) / h);
-        col = Math.max(0, Math.min(cols - 1, col));
-        row = Math.max(0, Math.min(rows - 1, row));
-        return groupOfChunk(row, col);
+        const { rows, cols, subRows, subCols } = CONFIG.grid;
+        const totalCols = cols * subCols;
+        const totalRows = rows * subRows;
+        const sw = (b.maxX - b.minX) / totalCols;
+        const sh = (b.maxY - b.minY) / totalRows;
+        let sc = Math.floor((p.x - b.minX) / sw);
+        let sr = Math.floor((p.y - b.minY) / sh);
+        sc = Math.max(0, Math.min(totalCols - 1, sc));
+        sr = Math.max(0, Math.min(totalRows - 1, sr));
+        return { sr, sc };
     }
 
     // Sombrea cada chunk con el color de su grupo (translúcido).
@@ -161,8 +164,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateGroups() {
+        const { rows, cols, subRows, subCols } = CONFIG.grid;
+        const totalCols = cols * subCols;
+        const totalRows = rows * subRows;
+
+        // 1) Conteo por sub-celda (rejilla fina).
+        const sub = Array.from({ length: totalRows }, () => new Array(totalCols).fill(0));
+        for (const p of points) {
+            const { sr, sc } = pointSubCell(p);
+            sub[sr][sc] += 1;
+        }
+
+        // 2) Total de cada chunk = suma de sus sub-celdas.
+        const chunk = Array.from({ length: rows }, () => new Array(cols).fill(0));
+        for (let sr = 0; sr < totalRows; sr++) {
+            for (let sc = 0; sc < totalCols; sc++) {
+                chunk[Math.floor(sr / subRows)][Math.floor(sc / subCols)] += sub[sr][sc];
+            }
+        }
+
+        // 3) Total de cada grupo = suma de sus chunks.
         const counts = new Array(CONFIG.groups.count).fill(0);
-        for (const p of points) counts[pointGroup(p)] += 1;
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                counts[groupOfChunk(r, c)] += chunk[r][c];
+            }
+        }
+
         const total = points.length;
         groupsBody.innerHTML = counts.map((c, i) => {
             const pct = total ? Math.round((c / total) * 100) : 0;
