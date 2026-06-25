@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const proximityInput = document.getElementById('proximity-distance');
     const speedInput = document.getElementById('speed');
     const joinToggle = document.getElementById('join-toggle');
+    const shadeToggle = document.getElementById('shade-toggle');
     const resetBtn = document.getElementById('reset-btn');
     const resultsBody = document.getElementById('results-body');
     const groupsBody = document.getElementById('groups-body');
@@ -119,9 +120,16 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsBody.innerHTML = html;
     }
 
-    // Grupo (0..count-1) al que pertenece un punto según el chunk en el que está.
-    // Los chunks se numeran en orden ascendente y de derecha a izquierda; con 4
-    // columnas, cada grupo de 4 chunks consecutivos = una fila.
+    // Grupo (0..count-1) de un chunk. Los chunks se numeran en orden ascendente
+    // y de derecha a izquierda; con 4 columnas, cada grupo = una fila.
+    function groupOfChunk(row, col) {
+        const { rows, cols } = CONFIG.grid;
+        const scanIndex = row * cols + (cols - 1 - col); // derecha → izquierda
+        const perGroup = (rows * cols) / CONFIG.groups.count;
+        return Math.min(CONFIG.groups.count - 1, Math.floor(scanIndex / perGroup));
+    }
+
+    // Grupo al que pertenece un punto según el chunk en el que está.
     function pointGroup(p) {
         const b = grid.getBounds();
         const { rows, cols } = CONFIG.grid;
@@ -131,9 +139,25 @@ document.addEventListener('DOMContentLoaded', () => {
         let row = Math.floor((p.y - b.minY) / h);
         col = Math.max(0, Math.min(cols - 1, col));
         row = Math.max(0, Math.min(rows - 1, row));
-        const scanIndex = row * cols + (cols - 1 - col); // derecha → izquierda
-        const perGroup = (rows * cols) / CONFIG.groups.count;
-        return Math.min(CONFIG.groups.count - 1, Math.floor(scanIndex / perGroup));
+        return groupOfChunk(row, col);
+    }
+
+    // Sombrea cada chunk con el color de su grupo (translúcido).
+    function drawGroupShading() {
+        const b = grid.getBounds();
+        const { rows, cols } = CONFIG.grid;
+        const cw = (b.maxX - b.minX) / cols;
+        const ch = (b.maxY - b.minY) / rows;
+        const colors = CONFIG.groups.colors;
+        ctx.save();
+        ctx.globalAlpha = CONFIG.groups.shadeOpacity;
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                ctx.fillStyle = colors[groupOfChunk(r, c) % colors.length];
+                ctx.fillRect(b.minX + c * cw, b.minY + r * ch, cw, ch);
+            }
+        }
+        ctx.restore();
     }
 
     function updateGroups() {
@@ -215,6 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // los puntos no se "filtre" a estos elementos.
         ctx.globalAlpha = 1;
         grid.draw();
+        if (shadeToggle.checked) drawGroupShading();
         drawCentroidArea();
 
         // 1) Mueve todos los puntos.
@@ -350,6 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
     proximityInput.value = CONFIG.points.proximity.distance;
     speedInput.value = CONFIG.points.speed;
     joinToggle.checked = CONFIG.points.interaction.enabled;
+    shadeToggle.checked = CONFIG.groups.shadeEnabled;
     generateCentroids();
     resizeCanvas();
     buildPoints();

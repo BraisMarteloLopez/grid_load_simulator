@@ -67,5 +67,7 @@ const CONFIG = {
     groups: {
         count: 4,
         colors: ['#4f8cff', '#ff9f4f', '#5fd17a', '#c08cff'],
+        shadeEnabled: false, // on/off del sombreado de chunks por grupo
+        shadeOpacity: 0.15,  // opacidad del sombreado
     },
 };
