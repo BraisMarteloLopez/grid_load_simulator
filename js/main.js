@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const speedInput = document.getElementById('speed');
     const joinToggle = document.getElementById('join-toggle');
     const shadeToggle = document.getElementById('shade-toggle');
+    const balanceToggle = document.getElementById('balance-toggle');
     const resetBtn = document.getElementById('reset-btn');
     const resultsBody = document.getElementById('results-body');
     const groupsBody = document.getElementById('groups-body');
@@ -120,26 +121,81 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsBody.innerHTML = html;
     }
 
-    // Grupo (0..count-1) de un chunk. Los chunks se numeran en orden ascendente
-    // y de derecha a izquierda; con 4 columnas, cada grupo = una fila.
-    function groupOfChunk(row, col) {
+    // Asignación inicial estática: chunks numerados en orden ascendente y de
+    // derecha a izquierda; con 4 columnas, cada grupo = una fila.
+    function staticGroupOfChunk(row, col) {
         const { rows, cols } = CONFIG.grid;
         const scanIndex = row * cols + (cols - 1 - col); // derecha → izquierda
         const perGroup = (rows * cols) / CONFIG.groups.count;
         return Math.min(CONFIG.groups.count - 1, Math.floor(scanIndex / perGroup));
     }
 
-    // Grupo al que pertenece un punto según el chunk en el que está.
-    function pointGroup(p) {
-        const b = grid.getBounds();
+    // Mapa dinámico chunk → grupo (se rebalancea cada ciclo).
+    let chunkGroupMap = [];
+    function initChunkGroupMap() {
         const { rows, cols } = CONFIG.grid;
-        const w = (b.maxX - b.minX) / cols;
-        const h = (b.maxY - b.minY) / rows;
-        let col = Math.floor((p.x - b.minX) / w);
-        let row = Math.floor((p.y - b.minY) / h);
-        col = Math.max(0, Math.min(cols - 1, col));
-        row = Math.max(0, Math.min(rows - 1, row));
-        return groupOfChunk(row, col);
+        chunkGroupMap = Array.from({ length: rows }, (_, r) =>
+            Array.from({ length: cols }, (_, c) => staticGroupOfChunk(r, c)));
+    }
+
+    // Grupo actual de un chunk según el mapa dinámico.
+    function groupOfChunk(row, col) {
+        return chunkGroupMap[row][col];
+    }
+
+    // Sub-celda (sr, sc) de la rejilla fina (rows*subRows × cols*subCols) en
+    // la que está un punto.
+    function pointSubCell(p) {
+        const b = grid.getBounds();
+        const { rows, cols, subRows, subCols } = CONFIG.grid;
+        const totalCols = cols * subCols;
+        const totalRows = rows * subRows;
+        const sw = (b.maxX - b.minX) / totalCols;
+        const sh = (b.maxY - b.minY) / totalRows;
+        let sc = Math.floor((p.x - b.minX) / sw);
+        let sr = Math.floor((p.y - b.minY) / sh);
+        sc = Math.max(0, Math.min(totalCols - 1, sc));
+        sr = Math.max(0, Math.min(totalRows - 1, sr));
+        return { sr, sc };
+    }
+
+    // Carga (nº de puntos) de cada chunk, contada por sub-celda y agregada.
+    function computeChunkCounts() {
+        const { rows, cols, subRows, subCols } = CONFIG.grid;
+        const totalCols = cols * subCols;
+        const totalRows = rows * subRows;
+        const sub = Array.from({ length: totalRows }, () => new Array(totalCols).fill(0));
+        for (const p of points) {
+            const { sr, sc } = pointSubCell(p);
+            sub[sr][sc] += 1;
+        }
+        const chunk = Array.from({ length: rows }, () => new Array(cols).fill(0));
+        for (let sr = 0; sr < totalRows; sr++) {
+            for (let sc = 0; sc < totalCols; sc++) {
+                chunk[Math.floor(sr / subRows)][Math.floor(sc / subCols)] += sub[sr][sc];
+            }
+        }
+        return chunk;
+    }
+
+    // Rebalanceo: reparte los chunks entre los grupos para igualar los puntos lo
+    // máximo posible (greedy: chunk más cargado → grupo menos cargado). El nº de
+    // chunks por grupo puede variar.
+    function balanceGroups(chunkCounts) {
+        const { rows, cols } = CONFIG.grid;
+        const n = CONFIG.groups.count;
+        const list = [];
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) list.push({ r, c, count: chunkCounts[r][c] });
+        }
+        list.sort((a, b) => b.count - a.count);
+        const loads = new Array(n).fill(0);
+        for (const it of list) {
+            let g = 0;
+            for (let k = 1; k < n; k++) if (loads[k] < loads[g]) g = k;
+            chunkGroupMap[it.r][it.c] = g;
+            loads[g] += it.count;
+        }
     }
 
     // Sombrea cada chunk con el color de su grupo (translúcido).
@@ -160,13 +216,25 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.restore();
     }
 
-    function updateGroups() {
-        const counts = new Array(CONFIG.groups.count).fill(0);
-        for (const p of points) counts[pointGroup(p)] += 1;
+    function updateGroups(chunkCounts) {
+        const { rows, cols } = CONFIG.grid;
+        const n = CONFIG.groups.count;
+
+        // Total de puntos y nº de chunks por grupo, según el mapa dinámico.
+        const counts = new Array(n).fill(0);
+        const chunksPer = new Array(n).fill(0);
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const g = groupOfChunk(r, c);
+                counts[g] += chunkCounts[r][c];
+                chunksPer[g] += 1;
+            }
+        }
+
         const total = points.length;
         groupsBody.innerHTML = counts.map((c, i) => {
             const pct = total ? Math.round((c / total) * 100) : 0;
-            return `<p style="color:${CONFIG.groups.colors[i % CONFIG.groups.colors.length]}">Grupo ${i + 1}: <strong>${c}</strong> (${pct}%)</p>`;
+            return `<p style="color:${CONFIG.groups.colors[i % CONFIG.groups.colors.length]}">Grupo ${i + 1}: <strong>${c}</strong> (${pct}%) · ${chunksPer[i]} ch</p>`;
         }).join('');
     }
 
@@ -257,11 +325,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // 4) Dibuja los puntos.
         for (const p of points) p.draw(ctx);
 
+        // Carga actual por chunk; rebalanceo de grupos a ciclo vencido.
+        const chunkCounts = computeChunkCounts();
+        balanceFrame += 1;
+        if (balanceToggle.checked && balanceFrame % CONFIG.groups.balanceInterval === 0) {
+            balanceGroups(chunkCounts);
+        }
+
         updateResults();
-        updateGroups();
+        updateGroups(chunkCounts);
         updateZoom();
         requestAnimationFrame(loop);
     }
+    let balanceFrame = 0;
 
     // --- Interacciones ---
     // Cada `interval` frames, con probabilidad `chance`, una partícula que tenga
@@ -371,6 +447,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!joinToggle.checked) interactions = [];
     });
 
+    // Al desactivar el balanceo dinámico, vuelve al mapeo estático.
+    balanceToggle.addEventListener('change', () => {
+        if (!balanceToggle.checked) initChunkGroupMap();
+    });
+
     // Inicializa el valor del control desde la config y arranca.
     countInput.value = CONFIG.points.count;
     centroidInput.value = CONFIG.behaviors.centroid.count;
@@ -378,6 +459,8 @@ document.addEventListener('DOMContentLoaded', () => {
     speedInput.value = CONFIG.points.speed;
     joinToggle.checked = CONFIG.points.interaction.enabled;
     shadeToggle.checked = CONFIG.groups.shadeEnabled;
+    balanceToggle.checked = CONFIG.groups.balanceEnabled;
+    initChunkGroupMap();
     generateCentroids();
     resizeCanvas();
     buildPoints();

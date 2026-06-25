@@ -69,5 +69,7 @@ const CONFIG = {
         colors: ['#4f8cff', '#ff9f4f', '#5fd17a', '#c08cff'],
         shadeEnabled: false, // on/off del sombreado de chunks por grupo
         shadeOpacity: 0.15,  // opacidad del sombreado
+        balanceEnabled: true, // on/off del balanceo dinámico
+        balanceInterval: 90, // frames por ciclo de rebalanceo dinámico
     },
 };
